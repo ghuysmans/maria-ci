@@ -1,0 +1,6 @@
+#we don't use T-SQL
+*.sql linguist-language=sql
+
+*.vbs eol=crlf
+*.ini eol=crlf
+*.bat eol=crlf
