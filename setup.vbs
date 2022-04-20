@@ -89,14 +89,20 @@ If Not fso.DriveExists(drive) Then
 	If disks Then WScript.Echo "There's an existing ImDisk drive."
 
 	WScript.Echo "Creating the virtual drive..."
-	Set exe = Run("imdisk -a -t vm -s " & size & " -p ""/fs:fat32 /q /y"" -m " & drive)
-	'no need to check ExitCode: imdisk always returns 0
-	e = exe.StdErr.ReadAll()
-	Dispose exe
-	If InStr(e, "Error") Then
-		WScript.Echo e
-		WScript.Quit 2
+	Set exe = Run("imdisk -a -t vm -s " & size & " -m " & drive)
+	If exe.ExitCode Then
+		WScript.Echo exe.StdErr.ReadAll()
+		WScript.Quit 6
 	End If
+	Dispose exe
+
+	WScript.Echo "Formatting the virtual drive..."
+	Set exe = Run("format.com /fs:fat32 /q /y " & drive)
+	If exe.ExitCode Then
+		WScript.Echo exe.StdErr.ReadAll()
+		WScript.Quit 7
+	End If
+	Dispose exe
 End If
 
 If Not fso.FolderExists(datadir) Then
