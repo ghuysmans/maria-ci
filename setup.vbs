@@ -10,6 +10,13 @@ force = False
 Dim wsh
 Set wsh = CreateObject("WScript.Shell")
 
+'adapted from https://stackoverflow.com/a/45069476
+Function IsAdmin()
+	On Error Resume Next
+	wsh.RegRead "HKEY_USERS\S-1-5-19\Environment\TEMP"
+	IsAdmin = Err.Number = 0
+End Function
+
 Function Run(cmd)
 	On Error Resume Next
 	Set Run = wsh.Exec(cmd)
@@ -89,6 +96,10 @@ If Not fso.DriveExists(drive) Then
 	If disks Then WScript.Echo "There's an existing ImDisk drive."
 
 	WScript.Echo "Creating the virtual drive..."
+	If Not IsAdmin Then
+		WScript.Echo "Please run this script as an administrator."
+		WScript.Quit 8
+	End If
 	Set exe = Run("imdisk -a -t vm -s " & size & " -m " & drive)
 	If exe.ExitCode Then
 		WScript.Echo exe.StdErr.ReadAll()
