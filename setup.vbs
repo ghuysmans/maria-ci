@@ -127,7 +127,18 @@ If Not fso.FolderExists(datadir) Then
 End If
 
 If Not fso.FileExists(pidfile) Or force Then
-	WScript.Echo "Starting the server..."
+	Set exe = Run("mysql -h " & addr & " -u root --password=test -e ""SELECT 1""")
+	If exe Is Nothing Then
+		WScript.Echo "Please install a MySQL client."
+		WScript.Quit 4
+	Else
+		e = exe.StdErr.ReadAll()
+		If InStr(e, "Access denied for user") Then
+			WScript.Echo "A server is already running on the same port. Please stop it."
+			WScript.Quit 9
+		End If
+	End If
+	WScript.Echo "Starting the test server..."
 	wsh.Run "mysqld" & dataarg & pidarg & logarg & " --bind-address=" & addr & " --performance_schema=0"
 	Set exe = Run("mysqladmin -h " & addr & " -u root password test")
 	If exe.ExitCode Then
