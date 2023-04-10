@@ -45,6 +45,16 @@ Sub Dispose(exe)
 	End With
 End Sub
 
+Sub TryOrQuit(Command, ExitCode)
+	Dim exe
+	Set exe = Run(Command)
+	If exe.ExitCode Then
+		WScript.Echo exe.StdErr.ReadAll()
+		WScript.Quit ExitCode
+	End If
+	Dispose exe
+End Sub
+
 Function InstallRun(test, app)
 	Set InstallRun = Run(test)
 	If InstallRun Is Nothing Then
@@ -100,33 +110,19 @@ If Not fso.DriveExists(drive) Then
 		WScript.Echo "Please run this script as an administrator."
 		WScript.Quit 8
 	End If
-	Set exe = Run("imdisk -a -t vm -s " & size & " -m " & drive)
-	If exe.ExitCode Then
-		WScript.Echo exe.StdErr.ReadAll()
-		WScript.Quit 6
-	End If
-	Dispose exe
+	TryOrQuit "imdisk -a -t vm -s " & size & " -m " & drive, 6
 
 	WScript.Echo "Formatting the virtual drive..."
-	Set exe = Run("format.com /fs:fat32 /q /y " & drive)
-	If exe.ExitCode Then
-		WScript.Echo exe.StdErr.ReadAll()
-		WScript.Quit 7
-	End If
-	Dispose exe
+	TryOrQuit "format.com /fs:fat32 /q /y " & drive, 7
 End If
 
 If Not fso.FolderExists(datadir) Then
 	WScript.Echo "Initializing the data directory..."
-	Set exe = Run("mysql_install_db" & dataarg)
-	If exe.ExitCode Then
-		WScript.Echo exe.StdErr.ReadAll()
-		WScript.Quit 3
-	End If
-	Dispose exe
+	TryOrQuit "mysql_install_db" & dataarg, 3
 End If
 
 If Not fso.FileExists(pidfile) Or force Then
+	'TODO let the user choose how we connect (ODBC, CLI)
 	Set exe = Run("mysql -h " & addr & " -u root --password=test -e ""SELECT 1""")
 	If exe Is Nothing Then
 		WScript.Echo "Please install a MySQL client."
