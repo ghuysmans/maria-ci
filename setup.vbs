@@ -134,6 +134,7 @@ If Not fso.FileExists(pidfile) Or force Then
 			WScript.Quit 9
 		End If
 	End If
+	Dispose exe
 	WScript.Echo "Starting the test server..."
 	wsh.Run "mysqld" & dataarg & pidarg & logarg & " --bind-address=" & addr & " --performance_schema=0"
 	Set exe = Run("mysqladmin -h " & addr & " -u root password test")
