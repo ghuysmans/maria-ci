@@ -82,6 +82,30 @@ Function InstallRun(test, app)
 	End If
 End Function
 
+Function TestConnection
+	TestConnection = ""
+	If WScript.Arguments.Named.Exists("odbc") Then
+		Dim conn
+		Set conn = CreateObject("ADODB.Connection")
+		On Error Resume Next
+		conn.Open "DRIVER=" & WScript.Arguments.Named("odbc") & ";SERVER=" & addr & ";UID=root;PASSWORD=test"
+		If Err Then
+			TestConnection = Err.Description
+			Err.Clear
+		End If
+	Else
+		Dim exe
+		Set exe = Run("mysql -h " & addr & " -u root --password=test -e ""SELECT 1""")
+		If exe Is Nothing Then
+			WScript.Echo "Please install a MySQL client or specify an ODBC driver."
+			WScript.Quit 4
+		Else
+			TestConnection = exe.StdErr.ReadAll()
+			Dispose exe
+		End If
+	End If
+End Function
+
 Dim fso
 Set fso = CreateObject("Scripting.FileSystemObject")
 
@@ -122,19 +146,10 @@ If Not fso.FolderExists(datadir) Then
 End If
 
 If Not fso.FileExists(pidfile) Or force Then
-	'TODO let the user choose how we connect (ODBC, CLI)
-	Set exe = Run("mysql -h " & addr & " -u root --password=test -e ""SELECT 1""")
-	If exe Is Nothing Then
-		WScript.Echo "Please install a MySQL client."
-		WScript.Quit 4
-	Else
-		e = exe.StdErr.ReadAll()
-		If InStr(e, "Access denied for user") Then
-			WScript.Echo "A server is already running on the same port. Please stop it."
-			WScript.Quit 9
-		End If
+	If InStr(TestConnection(), "Access denied for user") Then
+		WScript.Echo "A server is already running on the same port. Please stop it."
+		WScript.Quit 9
 	End If
-	Dispose exe
 	WScript.Echo "Starting the test server..."
 	wsh.Run "mysqld" & dataarg & pidarg & logarg & " --bind-address=" & addr & " --performance_schema=0"
 	Set exe = Run("mysqladmin -h " & addr & " -u root password test")
@@ -149,15 +164,12 @@ If Not fso.FileExists(pidfile) Or force Then
 	Dispose exe
 End If
 
-Set exe = Run("mysql -h " & addr & " -u root --password=test -e ""SELECT 1""")
-If exe Is Nothing Then
-	WScript.Echo "Couldn't test the server, please install a MySQL client."
-	WScript.Quit 4
-ElseIf exe.ExitCode Then
-	WScript.Echo exe.StdErr.ReadAll()
-	WScript.Quit 5
-Else
+e = TestConnection()
+If e = "" Then
 	WScript.Echo "Ready."
+Else
+	WScript.Echo e
+	WScript.Quit 5
 End If
 
 
