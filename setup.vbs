@@ -123,8 +123,7 @@ If Not fso.DriveExists(drive) Then
 	Set exe = InstallRun("imdisk -l", "ImDiskApp")
 	Dim disks
 	While Not exe.StdOut.AtEndOfStream
-		exe.StdOut.ReadLine
-		disks = disks + 1
+		If exe.StdOut.ReadLine() <> "No virtual disks." Then disks = disks + 1
 	Wend
 	Dispose exe
 	If disks Then WScript.Echo "There's an existing ImDisk drive."
