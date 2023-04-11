@@ -10,4 +10,6 @@ RUN mysql -u root --password=test -e "SELECT 1+1;"
 COPY mariadb-connector-odbc-3.1.15-win64.msi c:
 RUN msiexec /i mariadb-connector-odbc-3.1.15-win64.msi
 
+COPY smoketest.bat smoketest1.bat c:\\
+
 LABEL org.opencontainers.image.source=https://github.com/ghuysmans/maria-ci

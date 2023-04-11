@@ -1,0 +1,1 @@
+echo SELECT CONCAT('SELECT 0 FROM ', TABLE_SCHEMA, '.', TABLE_NAME, ' LIMIT 0;') stmt FROM information_schema.TABLES t WHERE TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys') |mysql --skip-column-names -u root |mysql -u root
